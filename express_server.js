@@ -6,6 +6,7 @@ const app = express();
 const port = process.env.PORT || 8181;
 const shortenUrl = require("./helpers/shortenUrl");
 const createUserId = require("./helpers/createUserId");
+const getUserByEmail = require("./helpers/getUserByEmail");
 // const userRoutes = require("./routes/user.routes")
 // const urlRoutes = require("./routes/url.routes")
 // require("./helpers/createUser");
@@ -44,6 +45,15 @@ app.get("/", (req, res) => {
 });
 
 //auth
+
+app.get("/login", (req, res) => {
+  const templateVars = {
+    username: req.cookies["username"],
+  };
+  res.render("pages/user_login", templateVars);
+});
+
+
 app.post("/login", (req, res) => {
   const { username } = req.body;
   res.cookie("username", username, {
@@ -62,7 +72,7 @@ app.get("/register", (req, res) => {
   const templateVars = {
     username: req.cookies["username"],
   };
-  res.render("pages/register", templateVars);
+  res.render("pages/user_register", templateVars);
 });
 
 app.post("/register", (req, res) => {
@@ -153,6 +163,11 @@ app.get("/u/:id", (req, res) => {
 
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+
+  if (!req.cookies["username"])
+  {
+    res.redirect('/login')
+  }
   res.render("pages/urls_index", templateVars);
 });
 

@@ -1,0 +1,33 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('../partials/_head'); %>
+</head>
+<body>
+
+<header>
+  <%- include('../partials/_header'); %>
+</header>
+
+<main style="margin: 1em;">
+  <div class="container">
+    <h3>Login</h3>
+    
+    <form action="/login" method="post">
+      <input type="email" name="email" placeholder="email" />
+      <input type="password" name="password" placeholder="password" />
+      <button>Login</button>
+    </form>
+    
+
+  </div>
+</main>
+
+<footer>
+  <%- include('../partials/_footer'); %>
+</footer>
+
+</body>
+</html>
