@@ -1,6 +1,5 @@
-const shortenUrl = () => {
-
-  const generateRandomString = (length) => {
+const length = 6;
+const shortenUrl = (length=6) => {
     let result           = '';
     const characters       = 'abcdefghijklmnopqrstuvwxyz0123456789';
     let charactersLength = characters.length;
@@ -10,8 +9,7 @@ const shortenUrl = () => {
     return result;
 }
 
-generateRandomString(6);
-
-}
 
 module.exports = shortenUrl;
+
+// console.log(shortenUrl())

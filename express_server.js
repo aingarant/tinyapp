@@ -10,36 +10,52 @@ app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
-}
+  b2xVn2: "http://www.lighthouselabs.ca",
+  "9sm5xK": "http://www.google.com",
+};
 
 // set the view engine to ejs
-app.set('view engine', 'ejs');
-
+app.set("view engine", "ejs");
 
 app.get("/", (req, res) => {
-  res.render('pages/index');
+  res.render("pages/index");
 });
-
 
 app.get("/url/new", (req, res) => {
-  res.render("pages/urls_new")
+  res.render("pages/urls_new");
 });
 
-app.post("/url/new", (req, res)=>
-{
+app.post("/url/new", (req, res) => {
   const longUrl = req.body.longUrl;
   const shortUrl = shortenUrl();
-  res.send(`Long Url: ${longUrl} and Short Url: ${shortUrl}`);
-})
+  urlDatabase[shortUrl] = longUrl;
+  res
+    .status(201)
+    .send(
+      `Long Url: ${longUrl} and Short Url: http://localhost:8181/url/${shortUrl}`
+    );
+});
+
+app.post("/url/:id/delete", (req, res) => {
+  const id = req.body.id;
+  delete urlDatabase[id];
+  res.send(urlDatabase)
+  console.log(urlDatabase);
+
+
+});
 
 app.get("/url/:id", (req, res) => {
   const id = req.params.id;
-  const templateVars = {id: id, longURL: urlDatabase[id]};
+  const templateVars = { id: id, longURL: urlDatabase[id] };
   res.render("pages/urls_show", templateVars);
+});
+
+app.get("/u/:id", (req, res) => {
+  const id = req.params.id;
+  const longURL = urlDatabase[id];
+  res.redirect(longURL);
 });
 
 app.get("/urls", (req, res) => {
@@ -47,11 +63,9 @@ app.get("/urls", (req, res) => {
   res.render("pages/urls_index", templateVars);
 });
 
-
 app.get("*", (req, res) => {
-  res.send("404 page.")
+  res.send("404 page.");
 });
-
 
 // set the listening port.
 app.listen(port, (req, res) => {
