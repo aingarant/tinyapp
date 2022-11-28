@@ -35,8 +35,9 @@ app.get("/urls", (req, res) => {
   res.render("pages/urls_index", templateVars);
 });
 
-app.get("/urls/:id", (req, res) => {
-  const templateVars = {id: req.params.id, longURL: urlDatabase.id, urls: urlDatabase};
+app.get("/url/:id", (req, res) => {
+  const id = req.params.id;
+  const templateVars = {id: id, longURL: urlDatabase[id]};
   res.render("pages/urls_show", templateVars);
 });
 
