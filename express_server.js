@@ -5,6 +5,7 @@ const cookieParser = require("cookie-parser");
 const app = express();
 const port = process.env.PORT || 8181;
 const shortenUrl = require("./helpers/shortenUrl");
+const createUserId = require("./helpers/createUserId");
 // const userRoutes = require("./routes/user.routes")
 // const urlRoutes = require("./routes/url.routes")
 // require("./helpers/createUser");
@@ -22,6 +23,8 @@ const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
 };
+
+const users = {};
 
 // app.use("/user", userRoutes)
 // app.use("/url", urlRoutes)
@@ -56,11 +59,39 @@ app.post("/logout", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  new User();
+  const templateVars = {
+    username: req.cookies["username"],
+  };
   res.render("pages/register", templateVars);
 });
 
-app.post("/register", (req, res) => {});
+app.post("/register", (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    res.status(400).send("email and password fields cannot be empty.");
+  }
+
+  const userId = createUserId();
+
+  users[userId] = {
+    userId: userId,
+    email: email,
+    password: password,
+  };
+
+  res.cookie("username", email, {
+    expires: new Date(Date.now() + 900000),
+    httpOnly: true,
+  });
+
+  res.cookie("user_id", userId, {
+    expires: new Date(Date.now() + 900000),
+    httpOnly: true,
+  });
+
+  res.redirect("/urls");
+});
 
 app.get("/url/new", (req, res) => {
   const templateVars = {
@@ -82,14 +113,12 @@ app.post("/url/new", (req, res) => {
 });
 
 app.post("/url/:id/delete", (req, res) => {
-  
   const id = req.body.id;
   delete urlDatabase[id];
   res.redirect(`/urls`);
 });
 
 app.post("/url/:id/edit", (req, res) => {
-
   const { id, newUrl } = req.body;
   urlDatabase[id] = newUrl;
   res.redirect(`/url/${id}`);
@@ -97,15 +126,22 @@ app.post("/url/:id/edit", (req, res) => {
 });
 
 app.get("/url/:id/edit", (req, res) => {
-
   const id = req.params.id;
-  const templateVars = {     username: req.cookies["username"], id: id, longURL: urlDatabase[id] };
+  const templateVars = {
+    username: req.cookies["username"],
+    id: id,
+    longURL: urlDatabase[id],
+  };
   res.render("pages/urls_edit", templateVars);
 });
 
 app.get("/url/:id", (req, res) => {
   const id = req.params.id;
-  const templateVars = { username: req.cookies["username"], id: id, longURL: urlDatabase[id] };
+  const templateVars = {
+    username: req.cookies["username"],
+    id: id,
+    longURL: urlDatabase[id],
+  };
   res.render("pages/urls_show", templateVars);
 });
 

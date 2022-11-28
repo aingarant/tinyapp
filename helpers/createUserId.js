@@ -1,5 +1,5 @@
 const length = 6;
-const creatUserId = (length=6) => {
+const createUserId = (length=6) => {
     let result           = '';
     const characters       = 'abcdefghijklmnopqrstuvwxyz0123456789';
     let charactersLength = characters.length;
@@ -10,4 +10,4 @@ const creatUserId = (length=6) => {
 }
 
 
-module.exports = creatUserId;
+module.exports = createUserId;
