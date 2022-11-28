@@ -21,8 +21,8 @@
 
         <% if(!username){ %>
         <form action="/login" method="post">
-          <input type="text" name="username" placeholder="usernanme">
-          <button>Login</button>
+          <input type="text" name="username" placeholder="username" class="form-control" required>
+          <button class="btn btn-danger">Login</button>
         </form>
         <% } else{ %>  
 
