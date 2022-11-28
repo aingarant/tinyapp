@@ -4,10 +4,11 @@ const cors = require("cors");
 const morgan = require("morgan");
 const app = express();
 const port = process.env.PORT || 8181;
-
+const shortenUrl = require("./helpers/shortenUrl");
 app.use(cors());
 app.use(morgan("dev"));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 
 const urlDatabase = {
@@ -19,21 +20,21 @@ const urlDatabase = {
 app.set('view engine', 'ejs');
 
 
-
 app.get("/", (req, res) => {
   res.render('pages/index');
 });
 
 
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
+app.get("/url/new", (req, res) => {
+  res.render("pages/urls_new")
 });
 
-
-app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
-  res.render("pages/urls_index", templateVars);
-});
+app.post("/url/new", (req, res)=>
+{
+  const longUrl = req.body.longUrl;
+  const shortUrl = shortenUrl();
+  res.send(`Long Url: ${longUrl} and Short Url: ${shortUrl}`);
+})
 
 app.get("/url/:id", (req, res) => {
   const id = req.params.id;
@@ -41,11 +42,11 @@ app.get("/url/:id", (req, res) => {
   res.render("pages/urls_show", templateVars);
 });
 
+app.get("/urls", (req, res) => {
+  const templateVars = { urls: urlDatabase };
+  res.render("pages/urls_index", templateVars);
+});
 
-// 
-// app.get("/urls.json", (req, res) => {
-//   res.json(urlDatabase);
-// });
 
 app.get("*", (req, res) => {
   res.send("404 page.")

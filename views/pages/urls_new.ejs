@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('../partials/_head'); %>
+</head>
+<body class="container">
+
+<header>
+  <%- include('../partials/_header'); %>
+</header>
+
+<main style="margin: 1em;">
+
+  <h3>Create TinyURL</h3>
+  <form action="/url/new" method="post">
+
+  Enter a URL: <input type="text" name="longUrl" id="longUrl" placheolder="http://" class="form-control" required>
+  <button type="submit" class="btn btn-primary">Submit</button>
+  </form>
+</main>
+
+<footer>
+  <%- include('../partials/_footer'); %>
+</footer>
+
+</body>
+</html>
