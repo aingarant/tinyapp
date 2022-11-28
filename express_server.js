@@ -1,12 +1,12 @@
 require("dotenv").config();
 const express = require("express");
-const cors = require("cors");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser")
 const app = express();
 const port = process.env.PORT || 8181;
 const shortenUrl = require("./helpers/shortenUrl");
-app.use(cors());
+require("./helpers/createUser");
+
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -16,20 +16,16 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com",
 };
 
-
-
-
 // set the view engine to ejs
 app.set("view engine", "ejs");
 
 app.get("/", (req, res) => {
-  const templateVars= {username: 'aingaran'}
+  const templateVars= {username: ''}
   res.render("pages/index", templateVars);
 });
 
 
 //auth
-
 app.post("/login", (req, res) => {
   const {username} = req.body;
   res.cookie('username', username, { expires: new Date(Date.now() + 900000), httpOnly: true });
@@ -38,9 +34,22 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  res.cookie('username', "");
+  res.clearCookie('username')
   res.redirect("/")
 });
+
+app.get("/register", (req, res) => {
+  new User;
+  res.render("pages/register")
+
+})
+
+app.post("/register", (req, res) => {
+
+})
+
+
+
 
 app.get("/url/new", (req, res) => {
   res.render("pages/urls_new");

@@ -25,7 +25,6 @@
     "morgan": "^1.10.0"
   },
   "devDependencies": {
-    "cors": "^2.8.5",
     "dotenv": "^16.0.3"
   }
 }
