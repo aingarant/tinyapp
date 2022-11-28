@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('../partials/_head'); %>
+</head>
+<body class="container">
+
+<header>
+  <%- include('../partials/_header'); %>
+</header>
+
+<main style="margin: 1em;">
+  <div class="card text-center">
+    <div class="card-header"></div>
+    <div class="card-body">
+      <h5 class="card-title">TinyURL for: <%= longURL %></h5>
+      <p class="card-text">
+        Short URL ID: <a href="/u/<%= id %>"><%= id %></a>
+      </p>
+    </div>
+    <div class="card-footer text-muted"></div>
+  </div>
+
+  <div class="card text-center">
+    <div class="card-header"></div>
+    <div class="card-body">
+      <h5 class="card-title">EDIT</h5>
+      <p class="card-text">
+        <form action="/url/<%= id %>/edit/" method="post">
+          <input type="text" value="<%= longURL %>" name="newUrl" class="p-2 rounded-md">
+          <input type="hidden" name="id" value="<%= id %>">
+          <button class="btn btn-primary">Submit</button>
+          </form>
+      </p>
+    </div>
+    <div class="card-footer text-muted"></div>
+  </div>
+</main>
+
+<footer>
+  <%- include('../partials/_footer'); %>
+</footer>
+
+</body>
+</html>
