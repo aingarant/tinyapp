@@ -1,8 +1,27 @@
 [
-  { "userId": 123, "username": "aingaran" },
-  { "userId": 124, "username": "mahee" },
-  { "userId": 456, "username": "mika" },
-  { "userId": 678, "username": "ana" },
-  { "userId": 911, "username": "amey" },
-  { "userId": 321, "username": "sanja" }
+  {
+    "userId": 111,
+    "email": "mario@mario.com",
+    "password" : "password"
+  },
+  {
+    "userId": 222,
+    "email": "wayne@wayne.com",
+    "password" : "password"
+  },
+  {
+    "userId": 333,
+    "email": "michael@michael.com",
+    "password" : "password"
+  },
+  {
+    "userId": 444,
+    "email": "kareem@kareem.com",
+    "password" : "password"
+  },
+  {
+    "userId": 555,
+    "email": "lebron@lebron.com",
+    "password" : "password"
+  }
 ]

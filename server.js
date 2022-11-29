@@ -3,17 +3,9 @@ const express = require("express");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 const app = express();
-const port = process.env.PORT || 80;
+const port = process.env.PORT || 8080;
 const shortenUrl = require("./helpers/shortenUrl");
 const createUserId = require("./helpers/createUserId");
-const getUserByEmail = require("./helpers/getUserByEmail");
-// const userRoutes = require("./routes/user.routes")
-// const urlRoutes = require("./routes/url.routes")
-// require("./helpers/createUser");
-
-const db = require("./db/users.json");
-
-console.log(db.userId);
 
 app.use(morgan("dev"));
 app.use(express.json());
@@ -25,15 +17,19 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com",
 };
 
-const users = {};
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
+};
 
-// app.use("/user", userRoutes)
-// app.use("/url", urlRoutes)
-
-// let username = null;
-
-// if (res.cookie())
-// set the view engine to ejs
 app.set("view engine", "ejs");
 
 app.get("/", (req, res) => {
@@ -44,15 +40,12 @@ app.get("/", (req, res) => {
   res.render("pages/index", templateVars);
 });
 
-//auth
-
 app.get("/login", (req, res) => {
   const templateVars = {
     username: req.cookies["username"],
   };
   res.render("pages/user_login", templateVars);
 });
-
 
 app.post("/login", (req, res) => {
   const { username } = req.body;
@@ -69,9 +62,13 @@ app.post("/logout", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
+  if (req.cookies["username"]) {
+    res.redirect("/login");
+  }
   const templateVars = {
     username: req.cookies["username"],
   };
+
   res.render("pages/user_register", templateVars);
 });
 
@@ -82,7 +79,15 @@ app.post("/register", (req, res) => {
     res.status(400).send("email and password fields cannot be empty.");
   }
 
+  // check if user exists in database.
+
   const userId = createUserId();
+
+  for (const key in users) {
+    if (email === users[key].email) {
+      return res.send(`${email} already resgistered.`);
+    }
+  }
 
   users[userId] = {
     userId: userId,
@@ -115,11 +120,6 @@ app.post("/url/new", (req, res) => {
   const shortUrl = shortenUrl();
   urlDatabase[shortUrl] = longUrl;
   res.redirect(`/url/${shortUrl}`);
-  // res
-  //   .status(201)
-  //   .send(
-  //     `Long Url: ${longUrl} and Short Url: http://localhost:8181/url/${shortUrl}`
-  //   );
 });
 
 app.post("/url/:id/delete", (req, res) => {
@@ -132,7 +132,6 @@ app.post("/url/:id/edit", (req, res) => {
   const { id, newUrl } = req.body;
   urlDatabase[id] = newUrl;
   res.redirect(`/url/${id}`);
-  // console.log(urlDatabase);
 });
 
 app.get("/url/:id/edit", (req, res) => {
@@ -164,15 +163,18 @@ app.get("/u/:id", (req, res) => {
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
 
-  if (!req.cookies["username"])
-  {
-    res.redirect('/login')
+  if (!req.cookies["username"]) {
+    res.redirect("/login");
   }
   res.render("pages/urls_index", templateVars);
 });
 
+// 404 page.
 app.get("*", (req, res) => {
-  res.send("404 page.");
+  const templateVars = {
+    username: req.cookies["username"],
+  };
+  res.render("pages/page_not_found", templateVars);
 });
 
 // set the listening port.
