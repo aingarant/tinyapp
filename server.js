@@ -1,91 +1,88 @@
 require("dotenv").config();
 const express = require("express");
 const morgan = require("morgan");
-const cookieParser = require("cookie-parser");
+const cookieSession = require("cookie-session");
 const app = express();
 const bcrypt = require("bcryptjs");
 
 const port = process.env.PORT || 8080;
+
+// helper functions
 const shortenUrl = require("./helpers/shortenUrl");
 const createUserId = require("./helpers/createUserId");
+
+// data files (database)
+const users = require("./db/users");
+const urls = require("./db/urls");
 
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
-
-const urlDatabase = {
-  b6UTxQ: {
-    longURL: "https://www.tsn.ca",
-    userID: "",
-  },
-  i3BoGr: {
-    longURL: "https://www.google.ca",
-    userID: "",
-  },
-};
-
-const users = {
-  userRandomID: {
-    userId: "userRandomID",
-    email: "user@example.com",
-    password: "purple-monkey-dinosaur",
-  },
-  user2RandomID: {
-    userId: "user2RandomID",
-    email: "user2@example.com",
-    password: "dishwasher-funk",
-  },
-};
+app.use(
+  cookieSession({
+    name: "session",
+    keys: ["uid"],
+  })
+);
+let message = "";
+let email = "";
 
 // helper functions
-const getUserByUserId = (userId) => {
-  let user = "";
-  for (const key in users) {
-    if (userId === users[key].userId) {
-      user = users[key];
-    }
+
+const getUserByUserId = (userId, users) => {
+  let user = null;
+  for (const userId in users) {
+    if (userId === users[userId].userId) user = users[userId];
   }
   return user;
 };
 
-const getUserByEmail = (email) => {
-  let user = "";
-  for (const key in users) {
-    if (email.toLowerCase() === users[key].email) {
-      user = users[key];
-    }
+const getUserByEmail = (email, users) => {
+  let user = null;
+  for (const userId in users) {
+    if (email === users[userId].email) user = users[userId];
   }
   return user;
 };
 
-const login = (email, password) => {
-  let user = "";
-  for (const key in users) {
-    if (
-      email.toLowerCase() === users[key].email &&
-      password === users[key].email
-    ) {
-      user = users[key];
-    }
+const login = (email, password, users) => {
+  let user = null;
+  const foundUser = getUserByEmail(email, users);
+  if (!foundUser) {
+    return (user = null);
   }
-  return user;
+
+  return bcrypt.compare(password, foundUser.password)
+    ? (user = foundUser)
+    : (user = null);
 };
 
-const register = (email, password) => {};
+// const register = (email, password, users) => {
+//   let newUser = "";
 
-const hasMyPassword = (password) => {
-  return bcrypt.hashSync(password, 10);
-}
+//   const userId = createUserId;
+//   const hashedPassword = bcrypt.hashSync(password, 10);
 
+//   users[userId] = {
+//     userId,
+//     email,
+//     hashedPassword,
+//   };
 
-const getMyUrls = (userId) => {
-  let urls = "";
+//   return newUser;
+// };
 
-  return urls;
-}
+const getMyUrls = (userId, urls) => {
+  let myUrls = [];
 
+  for (key in urls) {
+    if (urls[key].userId === userId) {
+      myUrls.push(urls[key][shortUrl]);
+    }
+  }
 
+  return myUrls;
+};
 
 app.set("view engine", "ejs");
 
@@ -97,33 +94,45 @@ GET ROUTES START HERE
 
 // get - home page
 app.get("/", (req, res) => {
+  const userId = req.session.userId;
+  const user = getUserByUserId(userId, users);
   const templateVars = {
-    userId: req.cookies["user_id"],
+    userId: userId,
+    email: user.email,
+    message: message,
+    user,
   };
+
+  console.log(templateVars);
 
   res.render("pages/index", templateVars);
 });
 
 // get - user - login
 app.get("/login", (req, res) => {
+  const userId = req.session.userId;
+  if (userId) return res.redirect("/");
+
   const templateVars = {
-    userId: req.cookies["user_id"],
+    userId: userId,
+    message: "",
   };
   res.render("pages/user_login", templateVars);
 });
 
 app.get("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  req.session = null;
   res.redirect("/");
 });
 
 // get - user - register
 app.get("/register", (req, res) => {
-  if (req.cookies["user_id"]) {
-    res.redirect("/login");
-  }
+  const userId = req.session.userId;
+  if (userId) return res.redirect("/");
+
   const templateVars = {
-    userId: req.cookies["user_id"],
+    userId: "",
+    message: "",
   };
 
   res.render("pages/user_register", templateVars);
@@ -131,23 +140,33 @@ app.get("/register", (req, res) => {
 
 // get - url - new
 app.get("/url/new", (req, res) => {
+  const userId = req.session.userId;
+
+  if (!userId) return res.redirect("/login");
+
+  const user = getUserByUserId(userId, users);
+
   const templateVars = {
-    userId: req.cookies["user_id"],
+    userId: userId,
+    email: user.email,
+    message: message,
+    user,
   };
 
-  if (!req.cookies["user_id"]) {
-    res.redirect("/login");
-  }
   res.render("pages/urls_new", templateVars);
 });
 
 // get - url - edit
 app.get("/url/:id/edit", (req, res) => {
   const id = req.params.id;
+  const longURL = urls[id].longURL;
+
   const templateVars = {
-    userId: req.cookies["user_id"],
+    userId: req.session.user_id,
     id: id,
-    longURL: urlDatabase[id],
+    longURL: longURL,
+    shortURL: id,
+    message: "",
   };
   res.render("pages/urls_edit", templateVars);
 });
@@ -156,27 +175,40 @@ app.get("/url/:id/edit", (req, res) => {
 app.get("/url/:id", (req, res) => {
   const id = req.params.id;
   const templateVars = {
-    userId: req.cookies["user_id"],
+    userId: req.session.user_id,
     id: id,
-    longURL: urlDatabase[id],
+    longURL: urls[id].longUrl,
+    message: "",
   };
+  console.log(templateVars.longURL);
   res.render("pages/urls_show", templateVars);
 });
 
 // get - url - go to
 app.get("/u/:id", (req, res) => {
   const id = req.params.id;
-  const longURL = urlDatabase[id];
+  const longURL = urls[id];
   res.redirect(longURL);
 });
 
 // get - urls - show all
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, userId: req.cookies["user_id"] };
+  const userId = req.session.userId;
+  const myUrls = getMyUrls(userId);
+  const user = getUserByUserId(userId);
+  console.log("the userid", userId);
+
+  const templateVars = {
+    message: "",
+    urls: myUrls,
+    user: user,
+    userId: userId,
+    email: "email",
+  };
   console.log(templateVars);
 
-  if (!req.cookies["user_id"]) {
-    res.redirect("/login");
+  if (!userId) {
+    return res.redirect("/login");
   }
   res.render("pages/urls_index", templateVars);
 });
@@ -199,51 +231,56 @@ POST ROUTES START HERE
 
 // all post routes start here //
 app.post("/login", (req, res) => {
+  message = "";
   const { email, password } = req.body;
+  const user = login(email, password, users);
 
-  const user = login(email, password);
   if (!user) {
-    return res.status(401).send("Login Error.");
+    const templateVars = {
+      userId: null,
+      message: "Invalid Login Details",
+    };
+    return res.render("pages/user_login", templateVars);
   }
-
-  res.cookie("user_id", users[key], {
-    expires: new Date(Date.now() + 900000),
-    httpOnly: true,
-  });
+  req.session.userId = user.userId;
   res.redirect("/");
 });
-
-// post - user - logout
-
 
 // post - user - register
 app.post("/register", (req, res) => {
   const { email, password } = req.body;
 
-  // check if input fields are empty.
   if (!email || !password) {
-    return res.status(400).send("email and password fields cannot be empty.");
+    const templateVars = {
+      userId: req.session.user_id,
+      message: "Email & Password fields must be filled out.",
+    };
+    return res.render("pages/user_register", templateVars);
   }
 
   // verify if user exists.
-  const user = getUserByEmail(email);
+  const user = getUserByEmail(email, users);
   if (user) {
-    return res.status(401).send(`User already regsitered.`);
+    const templateVars = {
+      userId: "",
+      message: "User is already regsitered. Please <a href='/login'>Login</a>",
+    };
+
+    return res.render("pages/user_register", templateVars);
   }
   // create new userId/
   const userId = createUserId();
+
+  const hashedPassword = bcrypt.hashSync(password, 10);
 
   // add user to users object.
   users[userId] = {
     userId: userId,
     email: email.toLowerCase(),
-    password: password,
+    password: hashedPassword,
   };
 
-  res.cookie("user_id", userId, {
-    expires: new Date(Date.now() + 900000),
-    httpOnly: true,
-  });
+  req.session.userId = userId;
 
   res.redirect("/urls");
 });
@@ -252,21 +289,21 @@ app.post("/register", (req, res) => {
 app.post("/url/new", (req, res) => {
   const longUrl = req.body.longUrl;
   const shortUrl = shortenUrl();
-  urlDatabase[shortUrl] = longUrl;
+  urls[shortUrl] = longUrl;
   res.redirect(`/url/${shortUrl}`);
 });
 
 //post - url - delete
 app.post("/url/:id/delete", (req, res) => {
   const id = req.body.id;
-  delete urlDatabase[id];
+  delete urls[id];
   res.redirect(`/urls`);
 });
 
 // post - url - edit
 app.post("/url/:id/edit", (req, res) => {
   const { id, newUrl } = req.body;
-  urlDatabase[id] = newUrl;
+  urls[id] = newUrl;
   res.redirect(`/url/${id}`);
 });
 
@@ -278,18 +315,20 @@ POST ROUTES END HERE
 
 /*
 ==========================================
-404 page route
+404 page route start
 ==========================================
 */
 app.get("*", (req, res) => {
+  let email = "";
   const templateVars = {
-    userId: req.cookies["user_id"],
+    userId: req.session.user_id,
+    email: email,
   };
   res.render("pages/page_not_found", templateVars);
 });
 /*
 ==========================================
-404 page route
+404 page route end
 ==========================================
 */
 

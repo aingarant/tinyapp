@@ -1,33 +1,47 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <%- include('../partials/_head'); %>
-</head>
-<body>
+  <head>
+    <%- include('../partials/_head'); %>
+  </head>
+  <body>
+    <header><%- include('../partials/_header'); %></header>
 
-<header>
-  <%- include('../partials/_header'); %>
-</header>
+<main>
+      <div class="container">
+        <div class="login-box p-4 bg-info w-50 mx-auto text-dark text-center">
+          <h3>Login</h3>
 
-<main style="margin: 1em;">
-  <div class="container">
-    <h3>Login</h3>
-    
-    <form action="/login" method="post">
-      <input type="email" name="email" placeholder="email" />
-      <input type="password" name="password" placeholder="password" />
-      <button>Login</button>
-    </form>
-    
+          
+          <% if(message) { %>
+            <div class="mx-auto w-100 p-2 bg-danger text-white"><%- message %></div>
+          <%} %>
 
-  </div>
-</main>
+          <form action="/login" method="post">
+            <div class="form-group">
+              <input
+                type="email"
+                name="email"
+                placeholder="email"
+                class="form-control my-2"
+              />
+            </div>
 
-<footer>
-  <%- include('../partials/_footer'); %>
-</footer>
+            <div class="form-group">
+              <input
+                type="password"
+                name="password"
+                placeholder="password"
+                class="form-control my-2"
+              />
+            </div>
 
-</body>
+            <button class="form-control btn btn-danger my-2">Login</button>
+          </form>
+          Don't have an account? <a href="/register">Register Here.</a>
+        </div>
+      </div>
+    </main>
+
+    <footer><%- include('../partials/_footer'); %></footer>
+  </body>
 </html>

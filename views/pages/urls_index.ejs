@@ -24,7 +24,7 @@
       <% for (let id in urls) { %>
         <tr>
           <td><a href='/url/<%= id %>'><%= id %></a></td>
-          <td><%= urls[id] %></td>
+          <td><%= urls[id].longURL %></td>
 
           <td>
             <form action="/url/<%= id %>/edit" method="get">
