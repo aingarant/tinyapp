@@ -1,15 +1,3 @@
-const length = 6;
-const shortenUrl = (length=6) => {
-    let result           = '';
-    const characters       = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    let charactersLength = characters.length;
-    for ( let i = 0; i < length; i++ ) {
-        result += characters.charAt(Math.floor(Math.random() * charactersLength));
-    }
-    return result;
-}
-
+const shortenUrl =  () => Math.random().toString(36).substring(2, 8);
 
 module.exports = shortenUrl;
-
-// console.log(shortenUrl())

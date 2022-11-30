@@ -19,18 +19,14 @@
       </div>
       <div>
 
-        <% if(!username){ %>
-        <form action="/login" method="post">
-          <input type="text" name="username" placeholder="username" class="form-control" required>
-          <button class="btn btn-danger">Login</button>
-        </form>
-        <a href="/register">
-          <button class="btn btn-primary">Register</button>
+        <% if(!userId){ %>
+          <a href="/login" class="btn btn-info">Login</a>
+        <a href="/register" class="btn btn-warning">Register
         </a>
         <% } else{ %>  
 
-        <form action="/logout" method="post">
-          <button>Logout (<%= username %>)</button>
+        Currently logged in as (email)
+          <a href="/logout" class="btn btn-warning">Logout</a>
         </form>
         <% } %>
 

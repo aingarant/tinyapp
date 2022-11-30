@@ -1,4 +1,4 @@
-const userDb = require("../db/users.json");
+const userDb = require("../db/users");
 
 const userRegisterPost = () => {};
 
