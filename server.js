@@ -13,7 +13,7 @@ const {
   userRegister,
 } = require("./helpers/user");
 
-const { getMyUrls, shortenUrl, getUrlById } = require("./helpers/url");
+const { urlsForUser, shortenUrl, getUrlById } = require("./helpers/url");
 
 // data files (database)
 const users = require("./db/users");
@@ -215,7 +215,7 @@ app.get("/urls", (req, res) => {
     return res.redirect("/login");
   }
 
-  const myUrls = getMyUrls(userId, urls);
+  const myUrls = urlsForUser(userId);
 
   const templateVars = {
     urls: myUrls,
