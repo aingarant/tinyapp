@@ -11,77 +11,32 @@ const {
   userRegister,
 } = require("../helpers/user");
 
-describe("#getUserByEmail()", function () {
-  it("email - should return false if not valid user", function () {
-    const email = "bob@bob.com";
-    const userObj = {
-      userId: "b2jd2j2",
-      email: "bob@bob.com",
-      password: "aingaran",
-    };
-    const validUser = getUserByEmail(email, users);
-    assert.notEqual(validUser, userObj);
+
+const testUsers = {
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+  "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
+};
+
+describe('getUserByEmail', function() {
+  it('should return a user with valid email', function() {
+    const user = getUserByEmail("user@example.com", testUsers);
+    const expectedUserID = "userRandomID";
+    assert.strictEqual(expectedUserID, user.id);
   });
 
-  it("email - should return true if valid user.", function () {
-    const email = "bob@bob.com";
-    const userObj = {
-      userId: "b2j2j2",
-      email: "bob@bob.com",
-      password: "aingaran",
-    };
-    const validUser = getUserByEmail(email, users);
-    assert.equal(userObj, validUser);
-  });
-});
-
-describe("#getUserByUserId()", function () {
-  it("should return false if not valid user", function () {
-    const userId = "b2j2jcc";
-    const userObj = {
-      userId: "b2j2j2",
-      email: "bob@bob.com",
-      password: "aingaran",
-    };
-    const validUser = getUserByUserId(userId, users);
-    assert.notEqual(validUser, userObj);
+  it('should return undefined', function() {
+    const user = getUserByEmail("ussdfer@example.com", testUsers);
+    const expectedUserID = undefined;
+    assert.strictEqual(expectedUserID, user);
   });
 
-  it("should return true if valid user.", function () {
-    const userId = "b2j2j2";
-    const userObj = {
-      userId: "b2j2j2",
-      email: "bob@bob.com",
-      password: "aingaran",
-    };
-    const validUser = getUserByUserId(userId, users);
-    assert.equal(userObj, validUser);
-  });
-});
 
-
-describe("#userRegister()", function () {
-  it("should return false if not valid user", function () {
-    const email = "aingarant@me.com";
-    const password = "aingaran";
-    const userObj = {
-      userId: "b2j2j2",
-      email: "bob@bob.com",
-      password: "aingaran",
-    };
-    const validUser = userRegister(email, password, users);
-    assert.notEqual(validUser, userObj);
-  });
-
-  it("should return true if valid user.", function () {
-    const email = "test@me.com";
-    const password = "aingaran";
-    const userObj = {
-      userId: "b2j2j2",
-      email: "bob@bob.com",
-      password: "aingaran",
-    };
-    const validUser = userRegister(email, password, users);
-    assert.equal(userObj, validUser);
-  });
 });

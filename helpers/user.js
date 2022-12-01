@@ -14,8 +14,10 @@ const getUserByUserId = (userId, users) => {
 };
 
 const getUserByEmail = (email, users) => {
-  let foundUser = null;
+  let foundUser = undefined;
   for (const userId in users) {
+    // if (email !== users[userId].email) return undefined;
+
     if (email === users[userId].email) foundUser = users[userId];
   }
   return foundUser;
@@ -44,7 +46,14 @@ const userRegister = (email, password, users) => {
     password: hashedPassword,
   });
 
-  return newUser;
+  if (!newUser) return `somethign went wrong`;
+
+  const returnedUser = {
+    userId: userId,
+    email: email.toLowerCase(),
+  };
+
+  return returnedUser;
 };
 
 module.exports = {
