@@ -59,33 +59,11 @@ describe("#getUserByUserId()", function () {
   });
 });
 
-describe("#userLogin()", function () {
-  it("should return false if not valid user", function () {
-    const userId = "b2j2jcc";
-    const userObj = {
-      userId: "b2j2j2",
-      email: "bob@bob.com",
-      password: "aingaran",
-    };
-    const validUser = userLogin(email, password, users);
-    assert.notEqual(validUser, userObj);
-  });
-
-  it("should return true if valid user.", function () {
-    const userId = "b2j2j2";
-    const userObj = {
-      userId: "b2j2j2",
-      email: "bob@bob.com",
-      password: "aingaran",
-    };
-    const validUser = userLogin(email, password, users);
-    assert.equal(userObj, validUser);
-  });
-});
 
 describe("#userRegister()", function () {
   it("should return false if not valid user", function () {
-    const userId = "b2j2jcc";
+    const email = "aingarant@me.com";
+    const password = "aingaran";
     const userObj = {
       userId: "b2j2j2",
       email: "bob@bob.com",
@@ -96,7 +74,8 @@ describe("#userRegister()", function () {
   });
 
   it("should return true if valid user.", function () {
-    const userId = "b2j2j2";
+    const email = "test@me.com";
+    const password = "aingaran";
     const userObj = {
       userId: "b2j2j2",
       email: "bob@bob.com",
