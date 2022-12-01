@@ -9,11 +9,13 @@
   <%- include('../partials/_header'); %>
 </header>
 
-<main>
-  <div class="jumbotron">
-    <h1>Aingaran's URL Shortener (TinyApp)</h1>
+<main class="container mx-auto my-4 bg-warning">
+  <div class="jumbotron bg-info p-4 h-50 text-center">
+    <h1>TinyApp</h1>
 
-    <p>Welcome to my URL shortener.</p>
+    <h3 class="my-4">Welcome <% if(userId) {%> back <%- email %><% } %> to Aingaran's URL Shortener.</h3>
+
+    <p>Please register to add, edit or view your shortened URLs.</p>
   </div>
 </main>
 

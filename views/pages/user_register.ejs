@@ -9,9 +9,9 @@
   <%- include('../partials/_header'); %>
 </header>
 
-<main style="margin: 1em;">
-  <div class="container">
-    <div class="p-4 bg-warning w-50 mx-auto text-dark text-center">
+<main class="container py-5">
+  <div>
+    <div class="p-4 bg-dark w-25 mx-auto text-light text-center">
       <h3>Register</h3>
 
       <% if(message) { %>
@@ -37,7 +37,7 @@
           />
         </div>
 
-        <button class="form-control btn btn-danger my-2">Register</button>
+        <button class="form-control btn btn-primary my-2">Register</button>
       </form>
       Don't have an account? <a href="/login">Login Here.</a>
     </div>

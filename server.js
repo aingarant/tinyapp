@@ -3,7 +3,6 @@ const express = require("express");
 const morgan = require("morgan");
 const cookieSession = require("cookie-session");
 const app = express();
-const bcrypt = require("bcryptjs");
 
 const port = process.env.PORT || 8080;
 
@@ -14,11 +13,7 @@ const {
   userRegister,
 } = require("./helpers/user");
 
-const { getMyUrls } = require("./helpers/url");
-
-// helper functions
-const shortenUrl = require("./helpers/shortenUrl");
-const createUserId = require("./helpers/createUserId");
+const { getMyUrls, shortenUrl, getUrlById } = require("./helpers/url");
 
 // data files (database)
 const users = require("./db/users");
@@ -37,74 +32,44 @@ app.use(
 
 // error mesage placeholder
 let message = "";
+let email = "";
+let user = "";
+let userId = null;
 
-// const getUserByUserId = (userId, users) => {
-//   let user = null;
-//   for (const userId in users) {
-//     if (userId === users[userId].userId) user = users[userId];
-//   }
-//   return user;
-// };
-
-// const getUserByEmail = (email, users) => {
-//   let user = null;
-//   for (const userId in users) {
-//     if (email === users[userId].email) user = users[userId];
-//   }
-//   return user;
-// };
-
-// const login = (email, password, users) => {
-//   let user = null;
-//   const foundUser = getUserByEmail(email, users);
-//   if (!foundUser) {
-//     return (user = null);
-//   }
-
-//   return bcrypt.compare(password, foundUser.password)
-//     ? (user = foundUser)
-//     : (user = null);
-// };
-
-// const getMyUrls = (userId, urls) => {
-//   let myUrls = [];
-
-//   for (urlId in urls) {
-//     if (urls[urlId].userId === userId) {
-//       myUrls.push(urls[urlId]);
-//     }
-//   }
-
-//   return myUrls;
-// };
-
-/*
-==========================================
-GET ROUTES START HERE
-==========================================
-*/
-
-// get - home page
+// get routes.
 app.get("/", (req, res) => {
-  const userId = req.session.userId;
-  const user = getUserByUserId(userId, users);
+  userId = req.session.userId;
+
+  if (!userId) {
+    req.session = null;
+  }
+
+  user = getUserByUserId(userId, users);
+
+  if (!user) {
+    req.session = null;
+  }
+
+  if (user) {
+    email = user.email;
+  }
+
   const templateVars = {
-    userId: userId,
-    email: user.email,
-    message: message,
-    user,
+    userId,
+    email,
+    message,
   };
   res.render("pages/index", templateVars);
 });
 
-// get - user - login
 app.get("/login", (req, res) => {
-  const userId = req.session.userId;
+  userId = req.session.userId;
   if (userId) return res.redirect("/");
 
   const templateVars = {
-    userId: userId,
-    message: "",
+    userId,
+    email,
+    message,
   };
   res.render("pages/user_login", templateVars);
 });
@@ -114,40 +79,63 @@ app.get("/logout", (req, res) => {
   res.redirect("/");
 });
 
-// get - user - register
 app.get("/register", (req, res) => {
-  const userId = req.session.userId;
+  userId = req.session.userId;
   if (userId) return res.redirect("/");
 
   const templateVars = {
-    userId: "",
-    message: "",
+    userId,
+    email,
+    message,
   };
-
   res.render("pages/user_register", templateVars);
 });
 
-// get - url - new
 app.get("/url/new", (req, res) => {
-  const userId = req.session.userId;
+  userId = req.session.userId;
 
-  if (!userId) return res.redirect("/login");
+  if (!userId) {
+    req.session = null;
+    return res.redirect("/login");
+  }
 
-  const user = getUserByUserId(userId, users);
+  user = getUserByUserId(userId, users);
+
+  if (!user) {
+    req.session = null;
+    return res.redirect("/login");
+  }
 
   const templateVars = {
-    userId: userId,
-    email: user.email,
-    message: message,
-    user,
+    userId,
+    email,
+    message,
   };
 
   res.render("pages/urls_new", templateVars);
 });
 
-// get - url - edit
 app.get("/url/:id/edit", (req, res) => {
+  userId = req.session.userId;
+
+  if (!userId) {
+    req.session = null;
+    return res.redirect("/login");
+  }
+
+  user = getUserByUserId(userId, users);
+
+  if (!user) {
+    req.session = null;
+    return res.redirect("/login");
+  }
+
   const id = req.params.id;
+
+  if (urls[id].userId !== userId) {
+    return res.send("nacho url!");
+  }
+
   const longUrl = urls[id].longUrl;
 
   const templateVars = {
@@ -155,13 +143,12 @@ app.get("/url/:id/edit", (req, res) => {
     id: id,
     longUrl: longUrl,
     shortUrl: id,
-    message: "",
-    email: "",
+    email,
+    message,
   };
   res.render("pages/urls_edit", templateVars);
 });
 
-// get - url - view
 app.get("/url/:id", (req, res) => {
   const id = req.params.id;
 
@@ -169,22 +156,30 @@ app.get("/url/:id", (req, res) => {
     return res.send(`URL not found.`);
   }
 
-  // validate if the url belongs to me
-  // isItMyUrl(url)
-  const userId = req.session.userId;
+  userId = req.session.userId;
+
+  if (!userId) {
+    req.session = null;
+    return res.redirect("/login");
+  }
+
+  user = getUserByUserId(userId, users);
+
+  if (!user) {
+    req.session = null;
+    return res.redirect("/login");
+  }
 
   if (urls[id].userId !== userId) {
     return res.send("nacho url!");
   }
 
   const longUrl = urls[id].longUrl;
-  const user = getUserByUserId(userId, users);
 
   const templateVars = {
-    message: "",
-    user: user,
-    userId: userId,
-    email: user.email,
+    userId,
+    email,
+    message,
     id: id,
     longUrl: longUrl,
   };
@@ -194,46 +189,68 @@ app.get("/url/:id", (req, res) => {
 // get - url - go to
 app.get("/u/:id", (req, res) => {
   const id = req.params.id;
-  const longUrl = urls[id].longUrl;
-  res.redirect(longUrl);
+
+  const url = getUrlById(id, urls);
+
+  if (!url) {
+    return res.redirect("/");
+  }
+
+  res.redirect(url.longUrl);
 });
 
 // get - urls - show all
 app.get("/urls", (req, res) => {
-  const userId = req.session.userId;
+  userId = req.session.userId;
 
   if (!userId) {
+    req.session = null;
+    return res.redirect("/login");
+  }
+
+  user = getUserByUserId(userId, users);
+
+  if (!user) {
+    req.session = null;
     return res.redirect("/login");
   }
 
   const myUrls = getMyUrls(userId, urls);
-  const user = getUserByUserId(userId, users);
 
   const templateVars = {
-    message: "",
     urls: myUrls,
-    user: user,
-    userId: userId,
-    email: user.email,
+    userId,
+    email,
+    message,
   };
   console.log(templateVars);
 
   res.render("pages/urls_index", templateVars);
 });
 
-app.get("/admin/users", (req, res) => {
-  res.json(users);
-});
+app.get("*", (req, res) => {
+  // check if session cookie exists for userId
+  userId = req.session.userId;
 
-app.get("/admin/urls", (req, res) => {
-  res.json(urls);
-});
+  if (!userId) {
+    req.session = null;
+  } else {
+    user = getUserByUserId(userId, users);
+  }
 
-/*
-==========================================
-GET ROUTES END HERE
-==========================================
-*/
+  if (!user) {
+    req.session = null;
+  } else {
+    email = user.email;
+  }
+
+  const templateVars = {
+    userId,
+    email,
+    message,
+  };
+  res.render("pages/page_not_found", templateVars);
+});
 
 /*
 ==========================================
@@ -244,8 +261,10 @@ POST ROUTES START HERE
 // all post routes start here //
 app.post("/login", (req, res) => {
   message = "";
-  const { email, password } = req.body;
-  const user = userLogin(email, password, users);
+  const emailInput = req.body.email;
+  const passwordInput = req.body.password;
+
+  user = userLogin(emailInput, passwordInput, users);
 
   if (!user) {
     const templateVars = {
@@ -260,9 +279,10 @@ app.post("/login", (req, res) => {
 
 // post - user - register
 app.post("/register", (req, res) => {
-  const { email, password } = req.body;
+  const emailInput = req.body.email;
+  const passwordInput = req.body.password;
 
-  if (!email || !password) {
+  if (!emailInput || !passwordInput) {
     const templateVars = {
       userId: req.session.userId,
       message: "Email & Password fields must be filled out.",
@@ -271,43 +291,26 @@ app.post("/register", (req, res) => {
   }
 
   // verify if user exists.
-  const user = getUserByEmail(email, users);
+  user = getUserByEmail(emailInput, users);
   if (user) {
     const templateVars = {
       userId: "",
-      message: "User is already regsitered. Please <a href='/login'>Login</a>",
+      message: "User is already registered. Please <a href='/login'>Login</a>.",
     };
 
     return res.render("pages/user_register", templateVars);
   }
-  // create new userId/
 
-  /*
-  const userId = createUserId();
-
-  const hashedPassword = bcrypt.hashSync(password, 10);
-
-  // add user to users object.
-  users[userId] = {
-    userId: userId,
-    email: email.toLowerCase(),
-    password: hashedPassword,
-  };
-
-  */
-
-  const newUser = userRegister(email, password, users);
+  const newUser = userRegister(emailInput, passwordInput, users);
   if (!newUser) return res.render("Somethign went wrong during registration");
-
 
   req.session.userId = newUser.userId;
 
   res.redirect("/urls");
 });
 
-// post - url - new
 app.post("/url/new", (req, res) => {
-  const userId = req.session.userId;
+  userId = req.session.userId;
 
   if (!userId) {
     return res.send(`Sorry, you need to be logged in.`);
@@ -318,50 +321,23 @@ app.post("/url/new", (req, res) => {
   urls[shortUrl] = {
     longUrl,
     shortUrl,
-    userId: userId,
+    userId,
   };
   res.redirect(`/url/${shortUrl}`);
 });
 
-//post - url - delete
 app.post("/url/:id/delete", (req, res) => {
   const id = req.body.id;
   delete urls[id];
   res.redirect(`/urls`);
 });
 
-// post - url - edit
 app.post("/url/:id/edit", (req, res) => {
-  const userId = req.session.userId;
+  userId = req.session.userId;
   const { id, newUrl } = req.body;
   urls[id] = { shortUrl: id, longUrl: newUrl, userId: userId };
   res.redirect(`/url/${id}`);
 });
-
-/*
-==========================================
-POST ROUTES END HERE
-==========================================
-*/
-
-/*
-==========================================
-404 page route start
-==========================================
-*/
-app.get("*", (req, res) => {
-  let email = "";
-  const templateVars = {
-    userId: req.session.user_id,
-    email: email,
-  };
-  res.render("pages/page_not_found", templateVars);
-});
-/*
-==========================================
-404 page route end
-==========================================
-*/
 
 // set the listening port.
 app.listen(port, (req, res) => {

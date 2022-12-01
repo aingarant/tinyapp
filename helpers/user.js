@@ -1,23 +1,24 @@
 const users = require("../db/users");
 const bcrypt = require("bcryptjs");
 
-
 const createUserId = () => Math.random().toString(36).substring(2, 8);
 
 const getUserByUserId = (userId, users) => {
-  let user = null;
-  for (const userId in users) {
-    if (userId === users[userId].userId) user = users[userId];
+  let foundUser = null;
+  for (const id in users) {
+    if (userId === users[id].userId) {
+      foundUser = users[id];
+    }
   }
-  return user;
+  return foundUser;
 };
 
 const getUserByEmail = (email, users) => {
-  let user = null;
+  let foundUser = null;
   for (const userId in users) {
-    if (email === users[userId].email) user = users[userId];
+    if (email === users[userId].email) foundUser = users[userId];
   }
-  return user;
+  return foundUser;
 };
 
 const userLogin = (email, password, users) => {
@@ -27,28 +28,23 @@ const userLogin = (email, password, users) => {
     return (user = null);
   }
 
-  return bcrypt.compare(password, foundUser.password)
+  return bcrypt.compareSync(password, foundUser.password)
     ? (user = foundUser)
     : (user = null);
 };
 
 const userRegister = (email, password, users) => {
-  // verify if user exists.
-
-  // create new userId/
   const userId = createUserId();
 
   const hashedPassword = bcrypt.hashSync(password, 10);
 
-  // add user to users object.
-  const newUser = users[userId] = {
+  const newUser = (users[userId] = {
     userId: userId,
     email: email.toLowerCase(),
     password: hashedPassword,
-  };
+  });
 
   return newUser;
-
 };
 
 module.exports = {
@@ -56,5 +52,4 @@ module.exports = {
   getUserByUserId,
   userLogin,
   userRegister,
-  createUserId
 };
