@@ -3,38 +3,26 @@
 <head>
   <%- include('../partials/_head'); %>
 </head>
-<body class="container">
+<body>
 
 <header>
   <%- include('../partials/_header'); %>
 </header>
 
-<main>
-  <div class="card text-center">
-    <div class="card-header"></div>
-    <div class="card-body">
-      <h5 class="card-title">TinyURL for: <%= longURL %></h5>
+<main class="container">
+      <h5 class="card-title">TinyURL for: <%- longUrl %></h5>
       <p class="card-text">
         Short URL ID: <a href="/u/<%= id %>"><%= id %></a>
       </p>
-    </div>
 
-  </div>
-
-  <div class="card text-center">
-    <div class="card-header"></div>
-    <div class="card-body">
       <h5 class="card-title">EDIT</h5>
-      <p class="card-text">
-        <form action="/url/<%= id %>/edit/" method="post">
-          <input type="text" value="<%= longURL %>" name="newUrl" class="p-2 rounded-md">
+
+        <form action="/url/<%- id %>/edit" method="post">
+          <input type="text" value="<%- longUrl %>" name="newUrl" class="p-2 rounded-md">
           <input type="hidden" name="id" value="<%= id %>">
           <button class="btn btn-primary">Submit</button>
           </form>
-      </p>
-    </div>
-    <div class="card-footer text-muted"></div>
-  </div>
+
 </main>
 
 <footer>

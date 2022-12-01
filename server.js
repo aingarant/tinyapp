@@ -14,7 +14,8 @@ const createUserId = require("./helpers/createUserId");
 // data files (database)
 const users = require("./db/users");
 const urls = require("./db/urls");
-
+const { response } = require("express");
+app.set("view engine", "ejs");
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -24,10 +25,8 @@ app.use(
     keys: ["uid"],
   })
 );
-let message = "";
-let email = "";
 
-// helper functions
+let message = "";
 
 const getUserByUserId = (userId, users) => {
   let user = null;
@@ -57,34 +56,17 @@ const login = (email, password, users) => {
     : (user = null);
 };
 
-// const register = (email, password, users) => {
-//   let newUser = "";
-
-//   const userId = createUserId;
-//   const hashedPassword = bcrypt.hashSync(password, 10);
-
-//   users[userId] = {
-//     userId,
-//     email,
-//     hashedPassword,
-//   };
-
-//   return newUser;
-// };
-
 const getMyUrls = (userId, urls) => {
   let myUrls = [];
 
-  for (key in urls) {
-    if (urls[key].userId === userId) {
-      myUrls.push(urls[key][shortUrl]);
+  for (urlId in urls) {
+    if (urls[urlId].userId === userId) {
+      myUrls.push(urls[urlId]);
     }
   }
 
   return myUrls;
 };
-
-app.set("view engine", "ejs");
 
 /*
 ==========================================
@@ -159,14 +141,15 @@ app.get("/url/new", (req, res) => {
 // get - url - edit
 app.get("/url/:id/edit", (req, res) => {
   const id = req.params.id;
-  const longURL = urls[id].longURL;
+  const longUrl = urls[id].longUrl;
 
   const templateVars = {
-    userId: req.session.user_id,
+    userId: req.session.userId,
     id: id,
-    longURL: longURL,
-    shortURL: id,
+    longUrl: longUrl,
+    shortUrl: id,
     message: "",
+    email: ""
   };
   res.render("pages/urls_edit", templateVars);
 });
@@ -174,47 +157,69 @@ app.get("/url/:id/edit", (req, res) => {
 // get - url - view
 app.get("/url/:id", (req, res) => {
   const id = req.params.id;
+
+  if (!urls[id]) {
+    return res.send(`URL not found.`);
+  }
+
+  // validate if the url belongs to me
+  // isItMyUrl(url)
+  const userId = req.session.userId;
+
+  if (urls[id].userId !== userId) {
+    return res.send("nacho url!");
+  }
+
+  const longUrl = urls[id].longUrl;
+  const user = getUserByUserId(userId, users);
+
   const templateVars = {
-    userId: req.session.user_id,
-    id: id,
-    longURL: urls[id].longUrl,
     message: "",
+    user: user,
+    userId: userId,
+    email: user.email,
+    id: id,
+    longUrl: longUrl
   };
-  console.log(templateVars.longURL);
   res.render("pages/urls_show", templateVars);
 });
 
 // get - url - go to
 app.get("/u/:id", (req, res) => {
   const id = req.params.id;
-  const longURL = urls[id];
-  res.redirect(longURL);
+  const longUrl = urls[id].longUrl;
+  res.redirect(longUrl);
 });
 
 // get - urls - show all
 app.get("/urls", (req, res) => {
   const userId = req.session.userId;
-  const myUrls = getMyUrls(userId);
-  const user = getUserByUserId(userId);
-  console.log("the userid", userId);
+
+  if (!userId) {
+    return res.redirect("/login");
+  }
+
+  const myUrls = getMyUrls(userId, urls);
+  const user = getUserByUserId(userId, users);
 
   const templateVars = {
     message: "",
     urls: myUrls,
     user: user,
     userId: userId,
-    email: "email",
+    email: user.email,
   };
   console.log(templateVars);
 
-  if (!userId) {
-    return res.redirect("/login");
-  }
   res.render("pages/urls_index", templateVars);
 });
 
 app.get("/admin/users", (req, res) => {
-  res.send(`${JSON.stringify(users)}`);
+  res.json(users);
+});
+
+app.get("/admin/urls", (req, res) => {
+  res.json(urls);
 });
 
 /*
@@ -252,7 +257,7 @@ app.post("/register", (req, res) => {
 
   if (!email || !password) {
     const templateVars = {
-      userId: req.session.user_id,
+      userId: req.session.userId,
       message: "Email & Password fields must be filled out.",
     };
     return res.render("pages/user_register", templateVars);
@@ -287,9 +292,19 @@ app.post("/register", (req, res) => {
 
 // post - url - new
 app.post("/url/new", (req, res) => {
+  const userId = req.session.userId;
+
+  if (!userId) {
+    return res.send(`Sorry, you need to be logged in.`);
+  }
+
   const longUrl = req.body.longUrl;
   const shortUrl = shortenUrl();
-  urls[shortUrl] = longUrl;
+  urls[shortUrl] = {
+    longUrl,
+    shortUrl,
+    userId: userId,
+  };
   res.redirect(`/url/${shortUrl}`);
 });
 
@@ -302,8 +317,9 @@ app.post("/url/:id/delete", (req, res) => {
 
 // post - url - edit
 app.post("/url/:id/edit", (req, res) => {
+  const userId = req.session.userId;
   const { id, newUrl } = req.body;
-  urls[id] = newUrl;
+  urls[id] = {shortUrl: id, longUrl: newUrl, userId: userId};
   res.redirect(`/url/${id}`);
 });
 
