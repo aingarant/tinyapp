@@ -7,6 +7,15 @@ const bcrypt = require("bcryptjs");
 
 const port = process.env.PORT || 8080;
 
+const {
+  getUserByEmail,
+  getUserByUserId,
+  userLogin,
+  userRegister,
+} = require("./helpers/user");
+
+const { getMyUrls } = require("./helpers/url");
+
 // helper functions
 const shortenUrl = require("./helpers/shortenUrl");
 const createUserId = require("./helpers/createUserId");
@@ -14,7 +23,7 @@ const createUserId = require("./helpers/createUserId");
 // data files (database)
 const users = require("./db/users");
 const urls = require("./db/urls");
-const { response } = require("express");
+
 app.set("view engine", "ejs");
 app.use(morgan("dev"));
 app.use(express.json());
@@ -26,47 +35,48 @@ app.use(
   })
 );
 
+// error mesage placeholder
 let message = "";
 
-const getUserByUserId = (userId, users) => {
-  let user = null;
-  for (const userId in users) {
-    if (userId === users[userId].userId) user = users[userId];
-  }
-  return user;
-};
+// const getUserByUserId = (userId, users) => {
+//   let user = null;
+//   for (const userId in users) {
+//     if (userId === users[userId].userId) user = users[userId];
+//   }
+//   return user;
+// };
 
-const getUserByEmail = (email, users) => {
-  let user = null;
-  for (const userId in users) {
-    if (email === users[userId].email) user = users[userId];
-  }
-  return user;
-};
+// const getUserByEmail = (email, users) => {
+//   let user = null;
+//   for (const userId in users) {
+//     if (email === users[userId].email) user = users[userId];
+//   }
+//   return user;
+// };
 
-const login = (email, password, users) => {
-  let user = null;
-  const foundUser = getUserByEmail(email, users);
-  if (!foundUser) {
-    return (user = null);
-  }
+// const login = (email, password, users) => {
+//   let user = null;
+//   const foundUser = getUserByEmail(email, users);
+//   if (!foundUser) {
+//     return (user = null);
+//   }
 
-  return bcrypt.compare(password, foundUser.password)
-    ? (user = foundUser)
-    : (user = null);
-};
+//   return bcrypt.compare(password, foundUser.password)
+//     ? (user = foundUser)
+//     : (user = null);
+// };
 
-const getMyUrls = (userId, urls) => {
-  let myUrls = [];
+// const getMyUrls = (userId, urls) => {
+//   let myUrls = [];
 
-  for (urlId in urls) {
-    if (urls[urlId].userId === userId) {
-      myUrls.push(urls[urlId]);
-    }
-  }
+//   for (urlId in urls) {
+//     if (urls[urlId].userId === userId) {
+//       myUrls.push(urls[urlId]);
+//     }
+//   }
 
-  return myUrls;
-};
+//   return myUrls;
+// };
 
 /*
 ==========================================
@@ -84,9 +94,6 @@ app.get("/", (req, res) => {
     message: message,
     user,
   };
-
-  console.log(templateVars);
-
   res.render("pages/index", templateVars);
 });
 
@@ -149,7 +156,7 @@ app.get("/url/:id/edit", (req, res) => {
     longUrl: longUrl,
     shortUrl: id,
     message: "",
-    email: ""
+    email: "",
   };
   res.render("pages/urls_edit", templateVars);
 });
@@ -179,7 +186,7 @@ app.get("/url/:id", (req, res) => {
     userId: userId,
     email: user.email,
     id: id,
-    longUrl: longUrl
+    longUrl: longUrl,
   };
   res.render("pages/urls_show", templateVars);
 });
@@ -238,7 +245,7 @@ POST ROUTES START HERE
 app.post("/login", (req, res) => {
   message = "";
   const { email, password } = req.body;
-  const user = login(email, password, users);
+  const user = userLogin(email, password, users);
 
   if (!user) {
     const templateVars = {
@@ -274,6 +281,8 @@ app.post("/register", (req, res) => {
     return res.render("pages/user_register", templateVars);
   }
   // create new userId/
+
+  /*
   const userId = createUserId();
 
   const hashedPassword = bcrypt.hashSync(password, 10);
@@ -285,7 +294,13 @@ app.post("/register", (req, res) => {
     password: hashedPassword,
   };
 
-  req.session.userId = userId;
+  */
+
+  const newUser = userRegister(email, password, users);
+  if (!newUser) return res.render("Somethign went wrong during registration");
+
+
+  req.session.userId = newUser.userId;
 
   res.redirect("/urls");
 });
@@ -319,7 +334,7 @@ app.post("/url/:id/delete", (req, res) => {
 app.post("/url/:id/edit", (req, res) => {
   const userId = req.session.userId;
   const { id, newUrl } = req.body;
-  urls[id] = {shortUrl: id, longUrl: newUrl, userId: userId};
+  urls[id] = { shortUrl: id, longUrl: newUrl, userId: userId };
   res.redirect(`/url/${id}`);
 });
 
