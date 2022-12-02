@@ -24,15 +24,24 @@ const getUserByEmail = (email, users) => {
 };
 
 const userLogin = (email, password, users) => {
+  let returnedUser = null;
   let user = null;
+  
   const foundUser = getUserByEmail(email, users);
   if (!foundUser) {
     return (user = null);
   }
 
-  return bcrypt.compareSync(password, foundUser.password)
+  bcrypt.compareSync(password, foundUser.password)
     ? (user = foundUser)
     : (user = null);
+
+  returnedUser = {
+    userId: user.userId,
+    email: user.email,
+  };
+
+  return returnedUser;
 };
 
 const userRegister = (email, password, users) => {
@@ -46,7 +55,7 @@ const userRegister = (email, password, users) => {
     password: hashedPassword,
   });
 
-  if (!newUser) return `somethign went wrong`;
+  if (!newUser) return `Something went wrong`;
 
   const returnedUser = {
     userId: userId,

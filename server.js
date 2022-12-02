@@ -3,7 +3,6 @@ const express = require("express");
 const morgan = require("morgan");
 const cookieSession = require("cookie-session");
 const app = express();
-
 const port = process.env.PORT || 8080;
 
 const {
@@ -25,34 +24,29 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(
   cookieSession({
-    name: "session",
-    keys: ["uid"],
+    name: "userId",
+    keys: ["userId"],
+    maxAge: 24 * 60 * 60 * 1000,
   })
 );
 
-// error mesage placeholder
-let message = "";
-let email = "";
-let user = "";
-let userId = null;
-
-// get routes.
+// get routes start here.
 app.get("/", (req, res) => {
-  userId = req.session.userId;
+  const userId = req.session.userId;
+
+  let message = "";
 
   if (!userId) {
-    req.session = null;
+    return res.redirect("/login");
   }
 
-  user = getUserByUserId(userId, users);
+  const user = getUserByUserId(userId, users);
 
   if (!user) {
-    req.session = null;
+    return res.redirect("/login");
   }
 
-  if (user) {
-    email = user.email;
-  }
+  const email = user.email;
 
   const templateVars = {
     userId,
@@ -63,13 +57,14 @@ app.get("/", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  userId = req.session.userId;
+  const userId = req.session.userId;
+
   if (userId) return res.redirect("/");
 
   const templateVars = {
     userId,
-    email,
-    message,
+    email: null,
+    message: null,
   };
   res.render("pages/user_login", templateVars);
 });
@@ -80,7 +75,10 @@ app.get("/logout", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  userId = req.session.userId;
+  const userId = req.session.userId;
+  let email = "";
+  let message = "";
+
   if (userId) return res.redirect("/");
 
   const templateVars = {
@@ -92,19 +90,21 @@ app.get("/register", (req, res) => {
 });
 
 app.get("/url/new", (req, res) => {
-  userId = req.session.userId;
+  const userId = req.session.userId;
+  // let email = "";
+  let message = "";
 
   if (!userId) {
-    req.session = null;
     return res.redirect("/login");
   }
 
-  user = getUserByUserId(userId, users);
+  const user = getUserByUserId(userId, users);
 
   if (!user) {
-    req.session = null;
     return res.redirect("/login");
   }
+
+  const email = user.email;
 
   const templateVars = {
     userId,
@@ -116,21 +116,26 @@ app.get("/url/new", (req, res) => {
 });
 
 app.get("/url/:id/edit", (req, res) => {
-  userId = req.session.userId;
-
-  if (!userId) {
-    req.session = null;
-    return res.redirect("/login");
-  }
-
-  user = getUserByUserId(userId, users);
-
-  if (!user) {
-    req.session = null;
-    return res.redirect("/login");
-  }
 
   const id = req.params.id;
+
+  const userId = req.session.userId;
+  // let email = "";
+  let message = "";
+
+  if (!userId) {
+    return res.redirect("/login");
+  }
+
+  const user = getUserByUserId(userId, users);
+
+  if (!user) {
+    return res.redirect("/login");
+  }
+
+  const email = user.email;
+
+
 
   if (urls[id].userId !== userId) {
     return res.send("nacho url!");
@@ -156,19 +161,21 @@ app.get("/url/:id", (req, res) => {
     return res.send(`URL not found.`);
   }
 
-  userId = req.session.userId;
+  const userId = req.session.userId;
+  // let email = "";
+  let message = "";
 
   if (!userId) {
-    req.session = null;
     return res.redirect("/login");
   }
 
-  user = getUserByUserId(userId, users);
+  const user = getUserByUserId(userId, users);
 
   if (!user) {
-    req.session = null;
     return res.redirect("/login");
   }
+
+  const email = user.email;
 
   if (urls[id].userId !== userId) {
     return res.send("nacho url!");
@@ -201,19 +208,21 @@ app.get("/u/:id", (req, res) => {
 
 // get - urls - show all
 app.get("/urls", (req, res) => {
-  userId = req.session.userId;
+  const userId = req.session.userId;
+  // let email = "";
+  let message = "";
 
   if (!userId) {
-    req.session = null;
     return res.redirect("/login");
   }
 
-  user = getUserByUserId(userId, users);
+  const user = getUserByUserId(userId, users);
 
   if (!user) {
-    req.session = null;
     return res.redirect("/login");
   }
+
+  const email = user.email;
 
   const myUrls = urlsForUser(userId);
 
@@ -228,14 +237,25 @@ app.get("/urls", (req, res) => {
   res.render("pages/urls_index", templateVars);
 });
 
+app.get("/admin/users", (req, res) => {
+  res.json(users);
+});
+
+app.get("/admin/urls", (req, res) => {
+  res.json(urls);
+});
+
 app.get("*", (req, res) => {
   // check if session cookie exists for userId
-  userId = req.session.userId;
+  const userId = req.session.userId;
+  let email = "";
+  let message = "";
+  let user = null;
 
   if (!userId) {
     req.session = null;
   } else {
-    user = getUserByUserId(userId, users);
+    const user = getUserByUserId(userId, users);
   }
 
   if (!user) {
@@ -252,32 +272,7 @@ app.get("*", (req, res) => {
   res.render("pages/page_not_found", templateVars);
 });
 
-/*
-==========================================
-POST ROUTES START HERE
-==========================================
-*/
-
 // all post routes start here //
-app.post("/login", (req, res) => {
-  message = "";
-  const emailInput = req.body.email;
-  const passwordInput = req.body.password;
-
-  user = userLogin(emailInput, passwordInput, users);
-
-  if (!user) {
-    const templateVars = {
-      userId: null,
-      message: "Invalid Login Details",
-    };
-    return res.render("pages/user_login", templateVars);
-  }
-  req.session.userId = user.userId;
-  res.redirect("/");
-});
-
-// post - user - register
 app.post("/register", (req, res) => {
   const emailInput = req.body.email;
   const passwordInput = req.body.password;
@@ -291,7 +286,7 @@ app.post("/register", (req, res) => {
   }
 
   // verify if user exists.
-  user = getUserByEmail(emailInput, users);
+  const user = getUserByEmail(emailInput, users);
   if (user) {
     const templateVars = {
       userId: "",
@@ -309,8 +304,28 @@ app.post("/register", (req, res) => {
   res.redirect("/urls");
 });
 
+app.post("/login", (req, res) => {
+  let message = "";
+  const emailInput = req.body.email;
+  const passwordInput = req.body.password;
+
+  const user = userLogin(emailInput, passwordInput, users);
+
+  if (!user) {
+    const templateVars = {
+      userId: null,
+      email: null,
+      message: "Invalid Login Details",
+    };
+    return res.render("pages/user_login", templateVars);
+  }
+  req.session.userId = user.userId;
+
+  res.redirect("/");
+});
+
 app.post("/url/new", (req, res) => {
-  userId = req.session.userId;
+  const userId = req.session.userId;
 
   if (!userId) {
     return res.send(`Sorry, you need to be logged in.`);
@@ -333,7 +348,7 @@ app.post("/url/:id/delete", (req, res) => {
 });
 
 app.post("/url/:id/edit", (req, res) => {
-  userId = req.session.userId;
+  const userId = req.session.userId;
   const { id, newUrl } = req.body;
   urls[id] = { shortUrl: id, longUrl: newUrl, userId: userId };
   res.redirect(`/url/${id}`);

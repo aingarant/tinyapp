@@ -8,23 +8,11 @@ const getUrlById = (shortUrl, urls) => {
     if (urls[urlId].shortUrl === shortUrl) {
       foundUrl = urls[urlId];
     }
-    return foundUrl;
   }
+  return foundUrl;
 };
 
-const getMyUrls = (userId) => {
-  let myUrls = [];
-
-  for (const urlId in urls) {
-    if (urls[urlId].userId === userId) {
-      myUrls.push(urls[urlId]);
-    }
-  }
-
-  return myUrls;
-};
-
-const urlsForUser = (userId, urls) => {
+const urlsForUser = (userId) => {
   let myUrls = [];
 
   for (const urlId in urls) {
@@ -37,7 +25,6 @@ const urlsForUser = (userId, urls) => {
 };
 
 module.exports = {
-  getMyUrls,
   getUrlById,
   shortenUrl,
   urlsForUser,
